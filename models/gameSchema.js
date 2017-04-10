@@ -3,12 +3,12 @@ import {Schema} from 'mongoose';
 
 const gameSchema = new Schema({
 	player1: {
-		type: Schema.ObjectId,
-		ref: 'Player'
+		socketId: String,
+	  username: String
 	},
 	player2: {
-		type: Schema.ObjectId,
-		ref: 'Player'
+		socketId: String,
+		username: String
 	},
 	status: String,
 	victory: String,

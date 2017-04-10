@@ -2,8 +2,9 @@ import config from '../config';
 import Mongoose from 'mongoose';
 
 /*
-/ Finds the top empty row given a board and a column to place a piece. If
-/ there is no empty row, returns -1, otherwise returns the index of the row.
+/ Finds the top empty row given a board and a column to place a piece.
+/ If there is no empty row, returns -1, otherwise returns the index of
+/ the row.
 */
 function findEmptyRow(board, column) {
   let emptyRow = -1;
@@ -16,8 +17,8 @@ function findEmptyRow(board, column) {
 }
 
 /*
-/ Checks to see if a player won. Takes a board [String][String], row, column
-/ and player (String). Returns true of false.
+/ Checks to see if a player won. Takes a board [String][String], row,
+/ column and player (String). Returns true of false.
 */
 function checkVictory(board, row, column, player) {
 
@@ -123,9 +124,8 @@ function checkVictory(board, row, column, player) {
 }
 
 /*
-/ Used to create a new game. Takes 2 player id's (currently strings,
-/ but later will be updated to use ObjectId's) and creates a game,
-/ returning that game's ObjectId.
+/ Used to create a new game. Takes 2 player objects (username and
+/ socketId) and creates a game. Returns the game object
 */
 export const createGame = (player1, player2, callback) => {
 
@@ -150,49 +150,73 @@ export const createGame = (player1, player2, callback) => {
 	game.save( function (err, newGame) {
 
 		if(err) {
-			console.log("Ruh Roh");
+			console.log("Issue with creating new game\n\n" + err);
 		}
-    Game.populate( newGame, { path: 'player1 player2' }, function (err, newGame) {
-      callback( newGame );
-    });
+
+    callback( newGame );
 	});
 };
 
 /*
-/ Used to find a new game. Takes a gameId (ObjectId) and returns a JSON
-/ string containing all current game data.
+/ Used to find a new game. Takes a gameId (ObjectId) and returns the
+/ game document.
 */
 export const findGame = (gameId, callback) => {
 
 	Mongoose.connect(config.mongodbUri);
 	const Game = Mongoose.model('Game');
 
-	Game.findById(gameId).populate('player1 player2').exec(function( err, game ) {
+	Game.findById(gameId, function( err, game ) {
 		callback( game );
 	});
 }
 
 /*
-/ Used to delete a game once finished. Takes a gameId (ObjectId) and
-/ deletes it from the Mongodb. Returns "game deleted".
+/ Used to delete a game once finished or upon player disconnect.
+/ takes a socketId (string) and matches it to one of the players. If
+/ a player is not found (meaning someone disconnected who wasn't in
+/ a game) returns "N/A". Else will remove the game and associated chat
+/ documents and return the deletedGame document.
 */
-export const deleteGame = (gameId) => {
+export const deleteGame = (socketId, callback) => {
 
 	Mongoose.connect(config.mongodbUri);
 	const Game = Mongoose.model('Game');
+  const Chat = Mongoose.model('Chat');
 
-	Game.remove( { _id: gameId }, function(err) {
-		if (err) {
-			console.log("it didn't work");
-		}
-		Mongoose.connection.close();
-	});
+  Game.findOne( {$or: [
+      {'player1.socketId': socketId},
+      {'player2.socketId': socketId}
+    ]})
+    .exec(function (err, game) {
+      if (err || !game) {
+        console.log("Game did not attempt to delete");
+        callback("N/A");
+      }
+      else {
+        const gameId = game._id;
+
+        Game.remove( { _id: gameId }, function(err) {
+          if (err) {
+            console.log("Game didn't delete");
+          }
+        });
+
+        Chat.remove( { _id: gameId }, function(err) {
+          if (err) {
+            console.log("Chat didn't delete");
+          }
+        });
+
+        callback(game);
+      }
+    });
 }
 
 /*
 / Used to update a game when a move is made. Takes a gameId (ObjectId),
-/ the player making the move (String), and the [row][column] where the
-/ move is being made. Returns the updated game.
+/ and the column the move is being placed in. If the move was invalid,
+/ returns "null". Else updates the game and returns the updated game.
 */
 export const updateGame = (gameId, column, callback) => {
 

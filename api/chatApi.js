@@ -2,9 +2,8 @@ import config from '../config';
 import Mongoose from 'mongoose';
 
 /*
-/ Used to create a new game. Takes 2 player id's (currently strings,
-/ but later will be updated to use ObjectId's) and creates a game,
-/ returning that game's ObjectId.
+/ Used to create a new Chat. Takes a chatId that is identical to it's
+/ associated gameId and creates a chat. Returns the Chat document.
 */
 export const createChat = (chatId, callback) => {
 
@@ -27,8 +26,8 @@ export const createChat = (chatId, callback) => {
 };
 
 /*
-/ Used to find a new game. Takes a gameId (ObjectId) and returns a JSON
-/ string containing all current game data.
+/ Used to find a Chat. Takes a chatId that is identical to it's
+/ associated gameId and finds that chat. Returns the Chat document.
 */
 export const findChat = (chatId, callback) => {
 
@@ -41,8 +40,8 @@ export const findChat = (chatId, callback) => {
 }
 
 /*
-/ Used to delete a game once finished. Takes a gameId (ObjectId) and
-/ deletes it from the Mongodb. Returns "game deleted".
+/ Used to delete a chat once finished or upon player disconnect.Takes
+/ a chatId and deletes it from the Mongodb. Returns "chat deleted".
 */
 export const deleteChat = (chatId) => {
 
@@ -58,9 +57,9 @@ export const deleteChat = (chatId) => {
 }
 
 /*
-/ Used to update a game when a move is made. Takes a gameId (ObjectId),
-/ the player making the move (String), and the [row][column] where the
-/ move is being made. Returns the updated game.
+/ Used to update a Chat when a message is entered. Takes a chatId and
+/ a message object containing username, player status, and message text.
+/ pushes to the chat array and returns the updated chat.
 */
 export const updateChat = (chatId, message, callback) => {
 

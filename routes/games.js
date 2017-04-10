@@ -12,18 +12,20 @@ router.get('/find/:gameId', function(req, res, next) {
   });
 });
 
-router.get('/create/:player1.:player2', function(req, res, next) {
-  createGame(req.params.player1, req.params.player2, function(game) {
+router.post('/create/', function(req, res, next) {
+  createGame(req.body.player1, req.body.player2, function(game) {
   	res.send( game );
     Mongoose.connection.close();
-    console.log('game created!!!');
+    console.log('game created!!! ' + game._id);
   });
 });
 
-router.get('/delete/:gameId', function(req, res, next) {
-  deleteGame(req.params.gameId);
-  res.send( 'Game Deleted' );
-  console.log('game deleted!!!');
+router.get('/delete/:socketId', function(req, res, next) {
+  deleteGame(req.params.socketId, function(game) {
+    res.send( game );
+    Mongoose.connection.close();
+    console.log('game deleted!!!');
+  });
 });
 
 router.get('/update/:gameId.:column', function(req, res, next) {
